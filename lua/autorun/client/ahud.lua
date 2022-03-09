@@ -1,3 +1,5 @@
+local showHud = true
+
 surface.CreateFont("AHudFont", {
     font = "Arial",
     size = 18,
@@ -10,7 +12,12 @@ hook.Add("HUDShouldDraw", "HideDRPHud", function(name)
     if name == "DarkRP_LocalPlayerHUD" then return false end
 end)
 
+concommand.Add("togglehud", function()
+    showHud = not showHud
+end)
+
 hook.Add("HUDPaint", "ahud", function()
+    if showHud == false then return end
     local sw = ScrW()
     local sh = ScrH()
 
@@ -35,7 +42,7 @@ hook.Add("HUDPaint", "ahud", function()
 
     draw.RoundedBox(0, health_bar_x, health_bar_y, health_bar_w, health_bar_h, Color(24, 24, 32, 200))
 
-    local health_bar_percent = health / 100
+    local health_bar_percent = (health > 100 and 100 or health) / 100
     local health_bar_w_percent = health_bar_w * health_bar_percent
 
     draw.RoundedBox(0, health_bar_x + 1, health_bar_y + 1, health_bar_w_percent, health_bar_h - 2, health_color)
@@ -48,7 +55,7 @@ hook.Add("HUDPaint", "ahud", function()
 
     draw.RoundedBox(0, armor_bar_x, armor_bar_y, armor_bar_w, armor_bar_h, Color(24, 24, 32, 200))
 
-    local armor_bar_percent = armor / 100
+    local armor_bar_percent = (armor > 100 and 100 or armor) / 100
     local armor_bar_w_percent = armor_bar_w * armor_bar_percent
 
     draw.RoundedBox(0, armor_bar_x + 1, armor_bar_y + 1, armor_bar_w_percent, armor_bar_h - 2, armor_color)
