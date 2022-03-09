@@ -1,4 +1,7 @@
 local showHud = true
+local startHp, oldHp, newHp = 0, -1, -1
+local startAr, oldAr, newAr = 0, -1, -1
+local animTime = 0.3
 
 surface.CreateFont("AHudFont", {
     font = "Arial",
@@ -18,6 +21,8 @@ end)
 
 hook.Add("HUDPaint", "ahud", function()
     if showHud == false then return end
+    if !IsValid(LocalPlayer()) then return end
+
     local sw = ScrW()
     local sh = ScrH()
 
@@ -26,7 +31,42 @@ hook.Add("HUDPaint", "ahud", function()
     local y = sh - h - 10
 
     local health = LocalPlayer():Health()
+    local maxHealth = LocalPlayer():GetMaxHealth()
     local armor = LocalPlayer():Armor()
+    local maxArmor = LocalPlayer():GetMaxArmor()
+
+    if ( oldhp == -1 and newhp == -1 ) then
+		oldhp = health
+		newhp = health
+	end
+
+    if ( oldAr == -1 and newAr == -1 ) then
+        oldAr = armor
+        newAr = armor
+    end
+
+    local smoothHP = Lerp( ( SysTime() - startHp ) / animTime, oldHp, newHp )
+    local smoothAR = Lerp( ( SysTime() - startAr ) / animTime, oldAr, newAr )
+
+    if newHp ~= health then
+		if ( smoothHP ~= health ) then
+			newHp = smoothHP
+		end
+
+		oldHp = newHp
+		startHp = SysTime()
+		newHp = health
+	end
+
+    if newAr ~= armor then
+        if ( smoothAR ~= armor ) then
+            newAr = smoothAR
+        end
+
+        oldAr = newAr
+        startAr = SysTime()
+        newAr = armor
+    end
 
     local health_color = Color(255, 55, 45)
     local armor_color = Color(55, 45, 255)
@@ -42,10 +82,7 @@ hook.Add("HUDPaint", "ahud", function()
 
     draw.RoundedBox(0, health_bar_x, health_bar_y, health_bar_w, health_bar_h, Color(24, 24, 32, 200))
 
-    local health_bar_percent = (health > 100 and 100 or health) / 100
-    local health_bar_w_percent = health_bar_w * health_bar_percent
-
-    draw.RoundedBox(0, health_bar_x + 1, health_bar_y + 1, health_bar_w_percent, health_bar_h - 2, health_color)
+    draw.RoundedBox(0, health_bar_x + 1, health_bar_y + 1, math.Clamp(smoothHP , 0, maxHealth ) / maxHealth * health_bar_w - 2, health_bar_h - 2, health_color)
 
     -- Armor Bar
     local armor_bar_w = w - 20
@@ -55,10 +92,7 @@ hook.Add("HUDPaint", "ahud", function()
 
     draw.RoundedBox(0, armor_bar_x, armor_bar_y, armor_bar_w, armor_bar_h, Color(24, 24, 32, 200))
 
-    local armor_bar_percent = (armor > 100 and 100 or armor) / 100
-    local armor_bar_w_percent = armor_bar_w * armor_bar_percent
-
-    draw.RoundedBox(0, armor_bar_x + 1, armor_bar_y + 1, armor_bar_w_percent, armor_bar_h - 2, armor_color)
+    draw.RoundedBox(0, armor_bar_x + 1, armor_bar_y + 1, math.Clamp(smoothAR , 0, maxArmor ) / maxArmor * armor_bar_w - 2, armor_bar_h - 2, armor_color)
 
     -- Health Text
     local health_text_x = health_bar_x + health_bar_w / 2
