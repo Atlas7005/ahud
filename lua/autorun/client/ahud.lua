@@ -1,3 +1,4 @@
+if not CLIENT then return end
 local showHud = true
 local startHp, oldHp, newHp = 0, -1, -1
 local startAr, oldAr, newAr = 0, -1, -1
@@ -110,11 +111,12 @@ hook.Add("HUDPaint", "ahud", function()
     local name_text_x = x + 10
     local name_text_y = y + 5
 
-    if LocalPlayer():SteamID64() == "76561198145522438" then
-        draw.SimpleText("❤ Cutie ❤", "AHudFont", name_text_x, name_text_y, Color(255, 255, 255, 255), TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP)
-    else
-        draw.SimpleText(LocalPlayer():Nick(), "AHudFont", name_text_x, name_text_y, Color(255, 255, 255, 255), TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP)
+    local name = LocalPlayer():Nick()
+    if string.len(name) > 20 then
+        name = string.sub(name, 1, 20).."..."
     end
+
+    draw.SimpleText(name, "AHudFont", name_text_x, name_text_y, Color(255, 255, 255, 255), TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP)
 
     -- Money Text
     local money_text_x = x + 10
@@ -122,21 +124,73 @@ hook.Add("HUDPaint", "ahud", function()
 
     draw.SimpleText(DarkRP.formatMoney(LocalPlayer():getDarkRPVar("money")).." (+"..DarkRP.formatMoney(LocalPlayer():getDarkRPVar("salary"))..")", "AHudFont", money_text_x, money_text_y, Color(255, 255, 255, 255), TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP)
 
-    -- Job Text
-    local job_text_x = x + w - 10
-    local job_text_y = name_text_y
+    if isnumber(LocalPlayer():GetUTimeSessionTime()) then
+        local txtSession = "Session: "..timeToStr(LocalPlayer():GetUTimeSessionTime())
+        local txtTotal = "Total: "..timeToStr(LocalPlayer():GetUTimeTotalTime())
 
-    draw.SimpleText(LocalPlayer():getDarkRPVar("job"), "AHudFont", job_text_x, job_text_y, Color(255, 255, 255, 255), TEXT_ALIGN_RIGHT, TEXT_ALIGN_TOP)
+        -- UTime Box
+        utime_box_w = math.max((select(1, surface.GetTextSize(txtSession) )), (select(1, surface.GetTextSize(txtTotal) ))) + 25
+        local utime_box_h = (select(2, surface.GetTextSize(txtSession) )) + (select(2, surface.GetTextSize(txtTotal) )) + 8
+        local utime_box_x = x + w + 15
+        local utime_box_y = y + h - utime_box_h
 
-    surface.SetFont( "AHudFont" )
+        draw.RoundedBox(0, utime_box_x, utime_box_y, utime_box_w, utime_box_h, Color(24, 24, 32, 200))
+        draw.RoundedBox(0, utime_box_x + 1, utime_box_y + 1, utime_box_w - 2, utime_box_h - 2, Color(24, 24, 32, 200))
+
+        -- UTime Color Bar
+        local utime_color_bar_w = utime_box_w
+        local utime_color_bar_h = 2
+        local utime_color_bar_x = utime_box_x
+        local utime_color_bar_y = utime_box_y + utime_box_h - utime_color_bar_h
+
+        draw.RoundedBox(0, utime_color_bar_x, utime_color_bar_y, utime_color_bar_w, utime_color_bar_h, Color(113, 184, 251, 255))
+
+        -- UTime Text
+        local utime_text_x = utime_box_x + (25 / 2)
+        local utime_text_y = y + h - utime_box_h + (8 / 2)
+
+        draw.SimpleText(txtSession, "AHudFont", utime_text_x, utime_text_y, Color(255, 255, 255, 255), TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP)
+        draw.SimpleText(txtTotal, "AHudFont", utime_text_x, utime_text_y + (utime_box_h / 2 - 4), Color(255, 255, 255, 255), TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP)
+    end
+
+    -- Job Box
+    local job_box_w = select(1, surface.GetTextSize(LocalPlayer():getDarkRPVar("job")) ) + 45
+    local job_box_h = select(2, surface.GetTextSize(LocalPlayer():getDarkRPVar("job")) ) + 8
+    local job_box_x
+    if isnumber(LocalPlayer():GetUTimeSessionTime()) then
+        job_box_x = x + w + 15 + utime_box_w + 15
+    else
+        job_box_x = x + w + 15
+    end
+    local job_box_y = y + h - job_box_h
+
+    draw.RoundedBox(0, job_box_x, job_box_y, job_box_w, job_box_h, Color(24, 24, 32, 200))
+    draw.RoundedBox(0, job_box_x + 1, job_box_y + 1, job_box_w - 2, job_box_h - 2, Color(24, 24, 32, 200))
 
     -- Job Color Bar
-    local job_color_bar_w = select(1, surface.GetTextSize(LocalPlayer():getDarkRPVar("job")) ) + 6
-    local job_color_bar_h = 2
-    local job_color_bar_x = job_text_x - job_color_bar_w + 3
-    local job_color_bar_y = name_text_y + 18
+    local job_color_w = job_box_w
+    local job_color_h = 2
+    local job_color_x = job_box_x
+    local job_color_y = job_box_y + job_box_h - job_color_h
 
-    local job_color = team.GetColor(LocalPlayer():Team())
+    draw.RoundedBox(0, job_color_x, job_color_y, job_color_w, job_color_h, team.GetColor(LocalPlayer():Team()))
 
-    draw.RoundedBox(0, job_color_bar_x, job_color_bar_y, job_color_bar_w, job_color_bar_h, job_color)
+    -- Job Text
+    local job_text_x = job_box_x + (45 / 2)
+    local job_text_y = y + h - job_box_h + (8 / 2)
+
+    draw.SimpleText(LocalPlayer():getDarkRPVar("job"), "AHudFont", job_text_x, job_text_y, Color(255, 255, 255, 255), TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP)
 end)
+
+function timeToStr( time )
+	local tmp = time
+	local s = tmp % 60
+	tmp = math.floor( tmp / 60 )
+	local m = tmp % 60
+	tmp = math.floor( tmp / 60 )
+	local h = tmp % 24
+	tmp = math.floor( tmp / 24 )
+	local d = tmp % 7
+
+	return string.format( "%id %02ih %02im %02is", d, h, m, s )
+end
